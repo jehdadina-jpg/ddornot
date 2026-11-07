@@ -64,7 +64,7 @@ a { color: inherit; }
 body.is-dry .answer { color: var(--accent); }
 body.is-maybe .answer { color: transparent; -webkit-text-stroke: 2px var(--accent); }
 .answer.go { animation: rise-in .9s var(--ease) both; }
-@keyframes rise-in { from { transform: translateY(105%); } }
+@keyframes rise-in { from { transform: translateY(40%); opacity: 0; filter: blur(12px); } }
 .reason { font-size: 18px; line-height: 1.45; color: var(--ink-2); max-width: 30ch; }
 .reason b { color: var(--ink); font-weight: 600; }
 
@@ -197,3 +197,81 @@ code { font: 13px "Geist Mono"; background: var(--surface); border: 1px solid va
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* =====================================================================
+   Stage: full-bleed hero with a liquid level that tells the answer.
+   Open = a full amber pour with bubbles. Dry = drained, red. Maybe = half.
+   ===================================================================== */
+:root { --amber: #ffb02e; --amber-2: #e8780c; --level: 58%; --liq-a: var(--amber); --liq-b: var(--amber-2); }
+body.is-dry { --level: 9%; --liq-a: #ff5733; --liq-b: #a3180a; }
+body.is-maybe { --level: 24%; --liq-a: #ff8a3d; --liq-b: #b8400f; }
+body.loading-state { --level: 0%; }
+
+.grain {
+  position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: .07; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.stage { position: relative; min-height: 80svh; overflow: hidden; isolation: isolate; display: flex; }
+.stage::before {
+  content: ""; position: absolute; inset: 0; z-index: -2;
+  background:
+    radial-gradient(120% 70% at 85% 100%, color-mix(in srgb, var(--liq-a) 22%, transparent), transparent 60%),
+    radial-gradient(80% 50% at 0% 0%, rgba(255,255,255,.05), transparent 60%);
+  transition: background 1s var(--ease);
+}
+.stage-in { position: relative; z-index: 2; width: 100%; display: flex; flex-direction: column; }
+.hero { margin-top: auto; padding: 24px 0 40px; }
+@media (min-width: 900px) { .stage { min-height: 86svh; } .hero { padding-bottom: 72px; max-width: 900px; } .answer { font-size: clamp(200px, 22vw, 320px); } }
+
+.liquid { position: absolute; left: 0; right: 0; bottom: 0; height: var(--level); z-index: 1; transition: height 1.6s cubic-bezier(.22,1,.36,1); }
+.liquid .body { position: absolute; inset: 0; background: linear-gradient(180deg, var(--liq-a), var(--liq-b)); transition: background 1s; }
+.liquid .body::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255,255,255,.12), transparent 30%, transparent 70%, rgba(0,0,0,.18)); }
+.wave { position: absolute; left: 0; bottom: calc(100% - 1px); width: 200%; height: 26px; }
+.wave path { fill: var(--liq-a); transition: fill 1s; }
+.w1 { animation: slosh 7s linear infinite; }
+.w2 { opacity: .5; height: 34px; animation: slosh 11s linear infinite reverse; }
+@keyframes slosh { to { transform: translateX(-50%); } }
+.bub { position: absolute; bottom: 0; left: var(--x); width: var(--s); height: var(--s); border-radius: 50%; border: 1px solid rgba(255,255,255,.55); background: rgba(255,255,255,.18); animation: bub var(--d) ease-in infinite; animation-delay: var(--o, 0s); opacity: 0; }
+@keyframes bub { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: .9; } 90% { opacity: .7; } 100% { transform: translateY(calc(-1 * var(--h, 30svh))); opacity: 0; } }
+body.is-dry .bub { display: none; }
+.liquid { --h: 30svh; }
+
+/* hero type on the stage */
+.stage .ask { color: var(--ink-2); }
+.stage .answer-wrap { overflow: visible; }
+.stage .answer { position: relative; }
+.stage .reason { color: var(--ink); opacity: .86; max-width: 34ch; }
+
+/* ticker */
+.ticker { position: relative; z-index: 3; overflow: hidden; border-block: 1px solid var(--line); background: #0a0a0c; height: 44px; display: flex; align-items: center; }
+.ticker .track { display: flex; gap: 40px; white-space: nowrap; padding-left: 16px; animation: tick 38s linear infinite; font: 500 13px "Geist Mono"; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); }
+.ticker .track span { display: inline-flex; align-items: center; gap: 10px; }
+.ticker .track b { color: var(--ink); font-weight: 500; }
+.ticker .track i { color: var(--accent); }
+@keyframes tick { to { transform: translateX(-50%); } }
+
+/* panels */
+.grid { margin-top: 40px; gap: 36px; }
+@media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; margin-top: 56px; } }
+.col > :first-child { margin-top: 0; }
+.next, .install { box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 30px 60px -30px rgba(0,0,0,.6); }
+.next { background: linear-gradient(180deg, #1a1a1e, #141417); }
+.clock div { background: #0d0d10; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+.clock b.tick { animation: flip .35s var(--ease); }
+@keyframes flip { from { transform: translateY(-35%); opacity: .2; } }
+.install { background: linear-gradient(120deg, var(--amber), var(--amber-2)); color: #160b02; }
+.install p { opacity: .8; }
+.install .go-ico { background: #160b02; color: var(--amber); }
+
+@media (prefers-reduced-motion: reduce) { .liquid { transition: none; } .ticker .track { animation: none; } }
+
+/* open: the hero text floats inside the pour, so it goes dark for contrast */
+body:not(.is-dry):not(.is-maybe) .stage .hero,
+body:not(.is-dry):not(.is-maybe) .stage .hero .ask,
+body:not(.is-dry):not(.is-maybe) .stage .hero .reason,
+body:not(.is-dry):not(.is-maybe) .stage .hero .reason b,
+body:not(.is-dry):not(.is-maybe) .stage .answer { color: #1a0d02; }
+body:not(.is-dry):not(.is-maybe) .stage .hero .reason { opacity: 1; }
+body:not(.is-dry):not(.is-maybe) .stage .hero .ask { opacity: .75; }
+@media (min-width: 900px) { :root { --level: 74%; } }

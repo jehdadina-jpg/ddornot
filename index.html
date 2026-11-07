@@ -15,26 +15,46 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..800&family=Geist+Mono:wght@400..600&display=swap">
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
-  <div class="shell">
-    <header class="bar">
-      <a class="mark" href="./">dry<span>?</span></a>
-      <button class="btn-ghost" id="where" aria-label="Change state">
-        <i class="ph ph-map-pin"></i><span id="whereName">Finding you</span><i class="ph ph-caret-down"></i>
-      </button>
-    </header>
+  <div class="grain" aria-hidden="true"></div>
 
-    <main class="grid">
-      <section>
+  <section class="stage">
+    <div class="liquid" aria-hidden="true">
+      <svg class="wave w1" viewBox="0 0 1200 60" preserveAspectRatio="none"><path d="M0 30 Q150 0 300 30 T600 30 T900 30 T1200 30 V60 H0Z"/></svg>
+      <svg class="wave w2" viewBox="0 0 1200 60" preserveAspectRatio="none"><path d="M0 30 Q150 60 300 30 T600 30 T900 30 T1200 30 V60 H0Z"/></svg>
+      <div class="body"></div>
+      <span class="bub" style="--x:12%;--d:6s;--s:6px"></span>
+      <span class="bub" style="--x:28%;--d:8s;--s:4px;--o:2s"></span>
+      <span class="bub" style="--x:46%;--d:5.5s;--s:7px;--o:1s"></span>
+      <span class="bub" style="--x:63%;--d:7s;--s:5px;--o:3s"></span>
+      <span class="bub" style="--x:79%;--d:6.5s;--s:4px;--o:.5s"></span>
+      <span class="bub" style="--x:91%;--d:9s;--s:6px;--o:2.5s"></span>
+    </div>
+
+    <div class="shell stage-in">
+      <header class="bar">
+        <a class="mark" href="./">dry<span>?</span></a>
+        <button class="btn-ghost" id="where" aria-label="Change state">
+          <i class="ph ph-map-pin"></i><span id="whereName">Finding you</span><i class="ph ph-caret-down"></i>
+        </button>
+      </header>
+
+      <div class="hero">
         <p class="ask" id="date">Is today a dry day in</p>
         <h1 class="state" id="state"><span class="skeleton sm"></span></h1>
         <div class="answer-wrap"><span class="answer" id="answer"><span class="skeleton"></span></span></div>
         <p class="reason" id="reason"></p>
-      </section>
+      </div>
+    </div>
+  </section>
 
-      <aside class="side">
+  <div class="ticker" aria-hidden="true"><div class="track" id="ticker"></div></div>
+
+  <div class="shell">
+    <main class="grid">
+      <div class="col">
         <div class="next" id="next"></div>
 
         <section class="cal">
@@ -42,7 +62,9 @@
           <div class="weekdays"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
           <div class="days" id="days"></div>
         </section>
+      </div>
 
+      <div class="col">
         <section class="up">
           <h2>Coming up</h2>
           <div id="ahead"></div>
@@ -54,7 +76,7 @@
         </a>
 
         <p class="foot">Checked <span id="verified"></span>. We only list dates backed by a state order. District, election and protest closures can be announced at short notice.</p>
-      </aside>
+      </div>
     </main>
   </div>
 
@@ -74,7 +96,7 @@
     </div>
   </div>
 
-  <script src="data.js?v=4"></script>
-  <script src="app.js?v=4"></script>
+  <script src="data.js?v=5"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

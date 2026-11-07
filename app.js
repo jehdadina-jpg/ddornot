@@ -93,7 +93,8 @@
         $("cd").textContent = Math.floor(ms / 864e5);
         $("ch").textContent = p(Math.floor(ms / 36e5) % 24);
         $("cm").textContent = p(Math.floor(ms / 6e4) % 60);
-        $("cs").textContent = p(Math.floor(ms / 1e3) % 60);
+        const set = (id, v) => { const el = $(id); if (el.textContent !== String(v)) { el.textContent = v; el.classList.remove("tick"); void el.offsetWidth; el.classList.add("tick"); } };
+        set("cs", p(Math.floor(ms / 1e3) % 60));
       };
       tick(); timer = setInterval(tick, 1000);
     }
@@ -128,6 +129,12 @@
             <span class="in${n <= 1 ? " hot" : ""}">${n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n}d`}</span></div>`;
         }).join("")
       : `<p class="empty">Nothing announced yet for ${esc(st.name)}.</p>`;
+
+    const tk = st.permanent ? [{ name: "Always dry", when: st.name }]
+      : all.slice(0, 6).map((d) => ({ name: d.name + (d.area ? `, ${d.area}` : ""), when: fmt(parse(d.date), { day: "numeric", month: "short" }) }));
+    const items = (tk.length ? tk : [{ name: "No dry days announced", when: "next 4 months" }])
+      .map((d) => `<span><i class="ph ph-prohibit"></i><b>${esc(d.name)}</b>${esc(d.when)}</span>`).join("");
+    $("ticker").innerHTML = items.repeat(6);
 
     $("verified").textContent = fmt(parse(DRY.verified), { day: "numeric", month: "long", year: "numeric" });
     document.title = isDry ? `Yes, ${st.name} is dry today` : isMaybe ? `Maybe, ${st.name} could be dry today` : `No, ${st.name} is not dry today`;

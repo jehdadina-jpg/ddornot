@@ -1,5 +1,5 @@
 // Network-first for pages/data (dates must be fresh), cache fallback for offline.
-const C = "dry-v5";
+const C = "dry-v6";
 const ASSETS = ["./", "index.html", "install.html", "style.css", "app.js", "data.js", "icons/icon-192.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(C).then((c) => c.addAll(ASSETS))); self.skipWaiting(); });
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
