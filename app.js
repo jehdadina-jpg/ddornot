@@ -25,7 +25,8 @@
 
   function daysFor(slug, from, to) {
     const st = states[slug];
-    const out = [...DRY.national, ...(st.days || [])];
+    const own = st.days || [];
+    const out = [...DRY.national.filter((n) => !own.some((d) => d.date === n.date)), ...own];
     if (st.monthlyFirst) {
       const d = parse(from); d.setDate(1);
       while (iso(d) <= to) { out.push({ ...st.monthlyFirst, date: iso(d) }); d.setMonth(d.getMonth() + 1); }
@@ -33,7 +34,7 @@
     return out.filter((d) => d.date >= from && d.date <= to).sort((a, b) => a.date.localeCompare(b.date));
   }
 
-  const TIER = { official: "State excise order", statutory: "Fixed by state rules", reported: "Press report, re-check" };
+  const TIER = { official: "State excise order", statutory: "Fixed by state rules", reported: "Press report, re-check", expected: "Expected, order pending" };
 
   let timer;
   function render(slug) {
@@ -43,22 +44,32 @@
     const today = iso(now), tom = iso(addDays(now, 1));
     const all = st.permanent ? [] : daysFor(slug, today, iso(addDays(now, 120)));
     const on = (k) => all.filter((x) => x.date === k);
+    const sure = (x) => x.tier !== "expected";
     const t = on(today), tm = on(tom);
-    const isDry = !!st.permanent || t.length > 0;
+    const tSure = t.filter(sure), tmSure = tm.filter(sure);
+    const isDry = !!st.permanent || tSure.length > 0;
+    const isMaybe = !isDry && t.length > 0;
 
     document.body.classList.toggle("is-dry", isDry);
+    document.body.classList.toggle("is-maybe", isMaybe);
     $("whereName").textContent = st.name;
     $("date").textContent = `${fmt(now, { weekday: "long", day: "numeric", month: "long" })}. Is it a dry day in`;
     $("state").textContent = st.name;
 
     const a = $("answer");
-    a.textContent = isDry ? "Yes." : "No.";
+    a.textContent = isDry ? "Yes." : isMaybe ? "Maybe." : "No.";
     a.classList.remove("go"); void a.offsetWidth; a.classList.add("go");
 
-    $("reason").innerHTML = st.permanent ? `<b>Every day.</b> ${esc(st.permanent)}`
-      : t.length ? `It's <b>${esc(t[0].name)}</b>. Liquor shops are shut today.`
-      : tm.length ? `Shops are open today. <b>Tomorrow is ${esc(tm[0].name)}</b>, so they'll be shut.`
-      : `Shops are open as usual.`;
+    const where = (d) => d.area ? ` in ${esc(d.area)}` : "";
+    const what = (d) => d.scope === "shops" ? "Liquor shops are shut. Bars and restaurants stay open." : "Shops, bars and restaurants can't sell alcohol.";
+    let reason;
+    if (st.permanent) reason = `<b>Every day.</b> ${esc(st.permanent)}`;
+    else if (isDry) reason = `It's <b>${esc(tSure[0].name)}</b>${where(tSure[0])}. ${what(tSure[0])}`;
+    else if (isMaybe) reason = `It's <b>${esc(t[0].name)}</b>${where(t[0])}. Usually a dry day, but this year's order isn't out yet.`;
+    else if (tmSure.length) reason = `Shops are open today. <b>Tomorrow is ${esc(tmSure[0].name)}</b>${where(tmSure[0])}. ${tmSure[0].scope === "shops" ? "Liquor shops will be shut, bars stay open." : "Shops and bars will be shut."}`;
+    else if (tm.length) reason = `Shops are open today. Tomorrow is ${esc(tm[0].name)}${where(tm[0])}, which may be a dry day.`;
+    else reason = `Shops are open as usual.`;
+    $("reason").innerHTML = reason;
 
     // Next dry day + live countdown
     clearInterval(timer);
@@ -74,7 +85,7 @@
       const days = Math.round((target - parse(today)) / 864e5);
       if (days <= 7) nx.classList.add("soon");
       nx.innerHTML = `<div class="next-top"><span>${t.length ? "After today, next" : "Next dry day"}</span><span>${fmt(target, { weekday: "short", day: "numeric", month: "short" })}</span></div>
-        <p class="next-name">${esc(next.name)}</p>
+        <p class="next-name">${esc(next.name)}${next.tier === "expected" ? " <span class=\"maybe-tag\">expected</span>" : ""}</p>${next.area ? `<p class="next-area">${esc(next.area)} only</p>` : ""}
         <div class="clock" aria-label="Time until ${esc(next.name)}"><div><b id="cd">0</b><small>days</small></div><div><b id="ch">00</b><small>hrs</small></div><div><b id="cm">00</b><small>min</small></div><div><b id="cs">00</b><small>sec</small></div></div>`;
       const p = (n) => String(n).padStart(2, "0");
       const tick = () => {
@@ -93,30 +104,33 @@
     const cells = [];
     for (let i = 0; i < 21; i++) {
       const d = addDays(start, i), k = iso(d);
-      const names = on(k).map((x) => x.name).join(", ");
-      const dry = (!!st.permanent && k >= today) || names;
-      const cls = ["d", k < today && "past", k === today && "today", dry && k >= today && "dry"].filter(Boolean).join(" ");
+      const hits = on(k);
+      const names = hits.map((x) => x.name).join(", ");
+      const dry = (!!st.permanent && k >= today) || hits.some(sure);
+      const maybe = !dry && hits.length > 0;
+      const cls = ["d", k < today && "past", k === today && "today", dry && k >= today && "dry", maybe && k >= today && "maybe"].filter(Boolean).join(" ");
       cells.push(`<div class="${cls}" style="--i:${i}" ${names ? `title="${esc(names)}"` : ""} aria-label="${fmt(d, { day: "numeric", month: "long" })}${dry && k >= today ? ", dry day" : ""}">${d.getDate()}</div>`);
     }
     $("days").innerHTML = cells.join("");
     $("range").textContent = `${fmt(start, { day: "numeric", month: "short" })} to ${fmt(end, { day: "numeric", month: "short" })}`;
 
     // Upcoming list
-    const upcoming = all.slice(0, 6);
+    const upcoming = all.slice(0, 8);
     $("ahead").innerHTML = st.permanent
       ? `<p class="empty">Shops stay shut all year under state law.</p>`
       : upcoming.length ? upcoming.map((d) => {
           const dt = parse(d.date), n = Math.round((dt - parse(today)) / 864e5);
           const src = d.src && SRC[d.src];
+          const facts = [d.tier === "expected" ? "Expected" : null, d.area ? `${d.area} only` : null, d.scope === "shops" ? "Shops only, bars open" : d.scope === "all" ? "Shops and bars shut" : null, d.note || null].filter(Boolean);
           const meta = src ? `<a href="${src.url}" target="_blank" rel="noopener">${esc(src.label)} <i class="ph ph-arrow-up-right"></i></a>` : `<span>${TIER[d.tier]}</span>`;
-          return `<div class="row"><span class="day"><b>${dt.getDate()}</b><small>${fmt(dt, { month: "short" })}</small></span>
-            <span class="what"><strong>${esc(d.name)}</strong>${meta}</span>
+          return `<div class="row${d.tier === "expected" ? " exp" : ""}"><span class="day"><b>${dt.getDate()}</b><small>${fmt(dt, { month: "short" })}</small></span>
+            <span class="what"><strong>${esc(d.name)}</strong>${facts.length ? `<em class="facts">${esc(facts.join(". "))}</em>` : ""}${meta}</span>
             <span class="in${n <= 1 ? " hot" : ""}">${n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n}d`}</span></div>`;
         }).join("")
       : `<p class="empty">Nothing announced yet for ${esc(st.name)}.</p>`;
 
     $("verified").textContent = fmt(parse(DRY.verified), { day: "numeric", month: "long", year: "numeric" });
-    document.title = `${isDry ? "Yes" : "No"}, ${st.name} ${isDry ? "is" : "is not"} dry today`;
+    document.title = isDry ? `Yes, ${st.name} is dry today` : isMaybe ? `Maybe, ${st.name} could be dry today` : `No, ${st.name} is not dry today`;
     try { localStorage.setItem(KEY, slug); } catch {}
     history.replaceState(null, "", `?s=${slug}`);
   }
