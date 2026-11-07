@@ -1,0 +1,14 @@
+{
+  "name": "Dry? — Is it a dry day?",
+  "short_name": "Dry?",
+  "start_url": "./?locate",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07060a",
+  "theme_color": "#07060a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

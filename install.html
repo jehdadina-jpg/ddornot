@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Install Dry?</title>
+  <meta name="theme-color" content="#07060a">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="style.css">
+  <style>:root { --a: #ffc24b; --b: #ff6a3d; }</style>
+</head>
+<body>
+  <div class="aurora"><i></i><i></i></div>
+  <div class="grain"></div>
+
+  <main class="wrap">
+    <header>
+      <a class="logo" href="./">dry<em>?</em></a>
+      <a class="pill" href="./">← Back</a>
+    </header>
+
+    <h1 class="h1">One tap.<br>Your state.<br><em>Every time.</em></h1>
+    <p class="sub">Add Dry? to your home screen. It opens like an app and finds your state from your location the moment you tap it.</p>
+
+    <div class="tabs" role="tablist">
+      <span class="thumb"></span>
+      <button data-t="ios">iPhone</button>
+      <button data-t="android">Android</button>
+      <button data-t="siri">Siri</button>
+    </div>
+
+    <section class="panel" id="ios">
+      <ol class="steps">
+        <li style="--i:0"><span>Open this site in <b>Safari</b>. Chrome on iPhone works too on iOS 16.4 and later.</span></li>
+        <li style="--i:1"><span>Tap the <b>Share</b> button at the bottom of the screen.</span></li>
+        <li style="--i:2"><span>Scroll down and tap <b>Add to Home Screen</b>.</span></li>
+        <li style="--i:3"><span>Keep the name <b>Dry?</b> and tap <b>Add</b>.</span></li>
+        <li style="--i:4"><span>Open it from your home screen and tap <b>Allow</b> when it asks for your location.</span></li>
+      </ol>
+    </section>
+
+    <section class="panel" id="android">
+      <button class="btn" id="installBtn" hidden>Install Dry? now</button>
+      <ol class="steps">
+        <li style="--i:0"><span>Open this site in <b>Chrome</b>.</span></li>
+        <li style="--i:1"><span>Tap the <b>⋮</b> menu at the top right.</span></li>
+        <li style="--i:2"><span>Tap <b>Add to Home screen</b> or <b>Install app</b>.</span></li>
+        <li style="--i:3"><span>Confirm with <b>Install</b>.</span></li>
+        <li style="--i:4"><span>Open it and <b>allow location</b>. It finds your state every time you launch it.</span></li>
+      </ol>
+    </section>
+
+    <section class="panel" id="siri">
+      <ol class="steps">
+        <li style="--i:0"><span>Open the <b>Shortcuts</b> app and tap <b>+</b>.</span></li>
+        <li style="--i:1"><span>Add the <b>Open URLs</b> action.</span></li>
+        <li style="--i:2"><span>Paste <code id="url"></code></span></li>
+        <li style="--i:3"><span>Name it <b>Is it a dry day</b>.</span></li>
+        <li style="--i:4"><span>Say <b>"Hey Siri, is it a dry day"</b>, or add the shortcut to your home screen from its share menu.</span></li>
+      </ol>
+      <button class="btn" id="copy">Copy link</button>
+    </section>
+
+    <p class="note"><span>🔒</span><span>Your location is only used on your phone to work out your state. It's never stored. If you say no, you can pick your state by hand.</span></p>
+  </main>
+
+  <script>
+    const url = location.origin + location.pathname.replace(/install\.html$/, "") + "?locate";
+    document.getElementById("url").textContent = url;
+    document.getElementById("copy").onclick = async (e) => {
+      try { await navigator.clipboard.writeText(url); e.target.textContent = "Copied ✓"; } catch { e.target.textContent = url; }
+    };
+
+    const thumb = document.querySelector(".thumb");
+    const show = (t) => document.querySelectorAll("[data-t]").forEach((b) => {
+      const on = b.dataset.t === t;
+      b.classList.toggle("on", on);
+      document.getElementById(b.dataset.t).classList.toggle("on", on);
+      if (on) thumb.style.transform = `translateX(${[...b.parentNode.querySelectorAll("button")].indexOf(b) * 100}%)`;
+    });
+    document.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => show(b.dataset.t)));
+    const first = /android/i.test(navigator.userAgent) ? "android" : "ios";
+    show(first);
+
+    let deferred;
+    addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault(); deferred = e;
+      const btn = document.getElementById("installBtn");
+      btn.hidden = false;
+      btn.onclick = async () => { deferred.prompt(); await deferred.userChoice; btn.hidden = true; };
+    });
+  </script>
+</body>
+</html>
