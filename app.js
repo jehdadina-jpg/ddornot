@@ -2,11 +2,13 @@
   const $ = (id) => document.getElementById(id);
   const KEY = "dry.state";
   const { states, SRC } = DRY;
+  let current = null;
 
   const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
   const parse = (s) => new Date(s + "T00:00");
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const fmt = (d, o) => d.toLocaleDateString("en-IN", o);
 
   const slugify = (s) => s.toLowerCase().replace(/&/g, " ").replace(/\band\b/g, " ").replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "");
   const ALIAS = {
@@ -21,132 +23,151 @@
     return Object.keys(states).find((k) => s.includes(k) || k.includes(s)) || null;
   };
 
-  // All dry days for a state within [from, to] (ISO strings)
   function daysFor(slug, from, to) {
     const st = states[slug];
     const out = [...DRY.national, ...(st.days || [])];
     if (st.monthlyFirst) {
-      let d = parse(from); d.setDate(1);
+      const d = parse(from); d.setDate(1);
       while (iso(d) <= to) { out.push({ ...st.monthlyFirst, date: iso(d) }); d.setMonth(d.getMonth() + 1); }
     }
     return out.filter((d) => d.date >= from && d.date <= to).sort((a, b) => a.date.localeCompare(b.date));
   }
 
+  const TIER = { official: "State excise order", statutory: "Fixed by state rules", reported: "Press report, re-check" };
+
   let timer;
   function render(slug) {
+    current = slug;
     const st = states[slug];
     const now = new Date();
     const today = iso(now), tom = iso(addDays(now, 1));
-    const horizon = iso(addDays(now, 90));
-    const all = st.permanent ? [] : daysFor(slug, today, horizon);
-    const on = (d) => all.filter((x) => x.date === d);
+    const all = st.permanent ? [] : daysFor(slug, today, iso(addDays(now, 120)));
+    const on = (k) => all.filter((x) => x.date === k);
     const t = on(today), tm = on(tom);
     const isDry = !!st.permanent || t.length > 0;
 
-    document.body.classList.remove("loading");
     document.body.classList.toggle("is-dry", isDry);
     $("whereName").textContent = st.name;
-    $("date").textContent = now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" });
-    $("q").innerHTML = `Is today a dry day in <b>${esc(st.name)}</b>?`;
+    $("date").textContent = `${fmt(now, { weekday: "long", day: "numeric", month: "long" })}. Is it a dry day in`;
+    $("state").textContent = st.name;
 
-    const word = isDry ? "Yes." : "Nope.";
     const a = $("answer");
-    a.textContent = word; a.classList.remove("go"); void a.offsetWidth; a.classList.add("go");
+    a.textContent = isDry ? "Yes." : "No.";
+    a.classList.remove("go"); void a.offsetWidth; a.classList.add("go");
 
-    $("reason").innerHTML = st.permanent ? `<b>Every single day.</b> ${esc(st.permanent)}`
+    $("reason").innerHTML = st.permanent ? `<b>Every day.</b> ${esc(st.permanent)}`
       : t.length ? `It's <b>${esc(t[0].name)}</b>. Liquor shops are shut today.`
-      : tm.length ? `You're fine today, but <b>tomorrow is ${esc(tm[0].name)}</b>. Stock up tonight.`
-      : `Shops are open. Pour one out responsibly.`;
+      : tm.length ? `Shops are open today. <b>Tomorrow is ${esc(tm[0].name)}</b>, so they'll be shut.`
+      : `Shops are open as usual.`;
 
-    // Countdown to next dry day
+    // Next dry day + live countdown
     clearInterval(timer);
+    const nx = $("next");
     const next = all.find((d) => d.date > today);
-    const cd = $("countdown");
-    if (st.permanent) cd.innerHTML = "";
-    else if (!next) cd.innerHTML = `No confirmed dry days in the next 90 days`;
-    else {
+    nx.classList.remove("soon");
+    if (st.permanent) {
+      nx.innerHTML = `<div class="next-top"><span>Status</span></div><p class="next-name">Always dry</p><p class="next-empty">${esc(st.name)} has full prohibition, so there's nothing to count down to.</p>`;
+    } else if (!next) {
+      nx.innerHTML = `<div class="next-top"><span>Next dry day</span></div><p class="next-name">None announced</p><p class="next-empty">No state order covers the next four months yet. We add dates as soon as orders are published.</p>`;
+    } else {
       const target = parse(next.date);
+      const days = Math.round((target - parse(today)) / 864e5);
+      if (days <= 7) nx.classList.add("soon");
+      nx.innerHTML = `<div class="next-top"><span>${t.length ? "After today, next" : "Next dry day"}</span><span>${fmt(target, { weekday: "short", day: "numeric", month: "short" })}</span></div>
+        <p class="next-name">${esc(next.name)}</p>
+        <div class="clock" aria-label="Time until ${esc(next.name)}"><div><b id="cd">0</b><small>days</small></div><div><b id="ch">00</b><small>hrs</small></div><div><b id="cm">00</b><small>min</small></div><div><b id="cs">00</b><small>sec</small></div></div>`;
+      const p = (n) => String(n).padStart(2, "0");
       const tick = () => {
         const ms = Math.max(0, target - new Date());
-        const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60, s = Math.floor(ms / 1e3) % 60;
-        const p = (n) => String(n).padStart(2, "0");
-        cd.innerHTML = `<span>${t.length ? "Next one" : "Dry in"}</span><span class="t">${d}<small>d</small>${p(h)}<small>h</small>${p(m)}<small>m</small>${p(s)}<small>s</small></span><span>· ${esc(next.name)}</span>`;
+        $("cd").textContent = Math.floor(ms / 864e5);
+        $("ch").textContent = p(Math.floor(ms / 36e5) % 24);
+        $("cm").textContent = p(Math.floor(ms / 6e4) % 60);
+        $("cs").textContent = p(Math.floor(ms / 1e3) % 60);
       };
       tick(); timer = setInterval(tick, 1000);
     }
 
-    // 21-day strip
-    const strip = [];
+    // Three-week calendar, starting on this week's Monday
+    const start = addDays(now, -((now.getDay() + 6) % 7));
+    const end = addDays(start, 20);
+    const cells = [];
     for (let i = 0; i < 21; i++) {
-      const d = addDays(now, i), k = iso(d);
-      const dry = !!st.permanent || on(k).length > 0;
-      strip.push(`<div class="day${i === 0 ? " today" : ""}${dry ? " dry" : ""}" style="--i:${i}" title="${esc(on(k).map((x) => x.name).join(", "))}">
-        <span class="w">${d.toLocaleDateString("en-IN", { weekday: "short" })}</span><span class="n">${d.getDate()}</span></div>`);
+      const d = addDays(start, i), k = iso(d);
+      const names = on(k).map((x) => x.name).join(", ");
+      const dry = (!!st.permanent && k >= today) || names;
+      const cls = ["d", k < today && "past", k === today && "today", dry && k >= today && "dry"].filter(Boolean).join(" ");
+      cells.push(`<div class="${cls}" style="--i:${i}" ${names ? `title="${esc(names)}"` : ""} aria-label="${fmt(d, { day: "numeric", month: "long" })}${dry && k >= today ? ", dry day" : ""}">${d.getDate()}</div>`);
     }
-    $("strip").innerHTML = strip.join("");
-    $("range").textContent = `${now.toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – ${addDays(now, 20).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+    $("days").innerHTML = cells.join("");
+    $("range").textContent = `${fmt(start, { day: "numeric", month: "short" })} to ${fmt(end, { day: "numeric", month: "short" })}`;
 
     // Upcoming list
-    const upcoming = all.filter((d) => d.date >= today).slice(0, 8);
+    const upcoming = all.slice(0, 6);
     $("ahead").innerHTML = st.permanent
-      ? `<li class="empty" style="display:block">Permanent prohibition. There's no calendar to check.</li>`
-      : upcoming.length ? upcoming.map((d, i) => {
-          const dt = parse(d.date), days = Math.round((dt - parse(today)) / 864e5);
+      ? `<p class="empty">Shops stay shut all year under state law.</p>`
+      : upcoming.length ? upcoming.map((d) => {
+          const dt = parse(d.date), n = Math.round((dt - parse(today)) / 864e5);
           const src = d.src && SRC[d.src];
-          return `<li style="--i:${i}">
-            <span class="dt"><b>${dt.getDate()}</b>${dt.toLocaleDateString("en-IN", { month: "short" })}</span>
-            <span class="nm">${esc(d.name)}<span class="tag ${d.tier}">${d.tier}</span>${src ? `<a href="${src.url}" target="_blank" rel="noopener">${esc(src.label)} ↗</a>` : ""}</span>
-            <span class="in">${days === 0 ? "today" : days === 1 ? "tmrw" : days + "d"}</span></li>`;
+          const meta = src ? `<a href="${src.url}" target="_blank" rel="noopener">${esc(src.label)} <i class="ph ph-arrow-up-right"></i></a>` : `<span>${TIER[d.tier]}</span>`;
+          return `<div class="row"><span class="day"><b>${dt.getDate()}</b><small>${fmt(dt, { month: "short" })}</small></span>
+            <span class="what"><strong>${esc(d.name)}</strong>${meta}</span>
+            <span class="in${n <= 1 ? " hot" : ""}">${n === 0 ? "today" : n === 1 ? "tomorrow" : `in ${n}d`}</span></div>`;
         }).join("")
-      : `<li class="empty" style="display:block">No state dry days have been announced for the next 90 days. Election and district orders can still close shops.</li>`;
+      : `<p class="empty">Nothing announced yet for ${esc(st.name)}.</p>`;
 
-    $("verified").textContent = parse(DRY.verified).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-    document.title = `${isDry ? "Yes" : "No"} — dry day in ${st.name}?`;
+    $("verified").textContent = fmt(parse(DRY.verified), { day: "numeric", month: "long", year: "numeric" });
+    document.title = `${isDry ? "Yes" : "No"}, ${st.name} ${isDry ? "is" : "is not"} dry today`;
     try { localStorage.setItem(KEY, slug); } catch {}
     history.replaceState(null, "", `?s=${slug}`);
   }
 
   async function locate() {
-    $("whereName").textContent = "Locating";
     const pos = await new Promise((res, rej) =>
-      navigator.geolocation ? navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, maximumAge: 30 * 60e3 }) : rej(new Error("no geolocation")));
+      navigator.geolocation ? navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000, maximumAge: 30 * 60e3 }) : rej(new Error("Location isn't available on this device.")));
     const { latitude, longitude } = pos.coords;
     const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
     const j = await r.json();
-    if (j.countryCode !== "IN") throw new Error("outside India");
+    if (j.countryCode !== "IN") throw new Error("Looks like you're outside India. Pick a state below.");
     const slug = matchState(j.principalSubdivision);
-    if (!slug) throw new Error("unknown state " + j.principalSubdivision);
+    if (!slug) throw new Error(`We couldn't match "${j.principalSubdivision}". Pick it below.`);
     return slug;
   }
+  const locErr = (e) => e && e.code === 1 ? "Location is blocked. Allow it in your browser settings, or pick below." : (e && e.message) || "Couldn't get your location. Pick below.";
 
-  // State picker
+  // State sheet
   const sheet = $("sheet");
   const drawOpts = (q = "") => {
     $("opts").innerHTML = Object.entries(states)
       .filter(([, s]) => s.name.toLowerCase().includes(q.toLowerCase()))
-      .map(([k, s]) => `<button class="opt" data-s="${k}">${esc(s.name)}${s.permanent ? "<small>always dry</small>" : ""}</button>`).join("");
+      .map(([k, s]) => `<button class="opt${k === current ? " cur" : ""}" data-s="${k}">${esc(s.name)}${s.permanent ? "<small>Always dry</small>" : ""}</button>`).join("")
+      || `<p class="empty">No state matches "${esc(q)}".</p>`;
   };
-  const openSheet = () => { drawOpts(); $("search").value = ""; sheet.classList.add("open"); };
-  $("where").onclick = openSheet;
+  const openSheet = (msg = "") => { drawOpts(); $("search").value = ""; $("msg").textContent = msg; sheet.classList.add("open"); };
+  const closeSheet = () => sheet.classList.remove("open");
+  $("where").onclick = () => openSheet();
+  $("close").onclick = closeSheet;
+  addEventListener("keydown", (e) => e.key === "Escape" && closeSheet());
   sheet.onclick = (e) => {
-    if (e.target === sheet) return sheet.classList.remove("open");
+    if (e.target === sheet) return closeSheet();
     const b = e.target.closest("[data-s]");
-    if (b) { sheet.classList.remove("open"); render(b.dataset.s); }
+    if (b) { closeSheet(); render(b.dataset.s); }
   };
   $("search").oninput = (e) => drawOpts(e.target.value);
-  $("useLoc").onclick = () => { sheet.classList.remove("open"); boot(true); };
+  $("useLoc").onclick = async () => {
+    $("msg").textContent = "Finding you...";
+    try { const s = await locate(); closeSheet(); render(s); }
+    catch (e) { $("msg").textContent = locErr(e); }
+  };
 
-  async function boot(forceLocate) {
+  async function boot() {
     const params = new URLSearchParams(location.search);
     const param = params.get("s");
     let saved = null; try { saved = localStorage.getItem(KEY); } catch {}
-    // A shared ?s= link wins unless launched from the home screen (?locate)
-    if (!forceLocate && param && states[param] && !params.has("locate")) return render(param);
-    if (saved && states[saved]) render(saved); // instant paint, then refine with GPS
+    if (param && states[param] && !params.has("locate")) return render(param);
+    if (saved && states[saved]) render(saved);
     try { render(await locate()); }
     catch (e) {
-      console.warn("locate failed:", e?.message || e);
-      if (!saved) { $("whereName").textContent = "Pick state"; openSheet(); }
+      if (!saved) { $("whereName").textContent = "Pick state"; openSheet(locErr(e)); }
     }
   }
 

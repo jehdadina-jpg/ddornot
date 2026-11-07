@@ -3,63 +3,74 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Dry? — Is it a dry day where you are?</title>
-  <meta name="description" content="Instantly know if today is a dry day in your state.">
-  <meta name="theme-color" content="#07060a">
+  <title>Dry? Is it a dry day where you are</title>
+  <meta name="description" content="Open it and know if liquor shops in your state are shut today.">
+  <meta name="theme-color" content="#0d0d0f">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Dry?">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..800&family=Geist+Mono:wght@400..600&display=swap">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="loading">
-  <div class="aurora"><i></i><i></i></div>
-  <div class="grain"></div>
-
-  <main class="wrap">
-    <header>
-      <a class="logo" href="./">dry<em>?</em></a>
-      <button class="pill" id="where" aria-label="Change state">
-        <span class="ping"></span><span id="whereName">Locating</span>
-        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4.5 6 7.5 9 4.5"/></svg>
+<body>
+  <div class="shell">
+    <header class="bar">
+      <a class="mark" href="./">dry<span>?</span></a>
+      <button class="btn-ghost" id="where" aria-label="Change state">
+        <i class="ph ph-map-pin"></i><span id="whereName">Finding you</span><i class="ph ph-caret-down"></i>
       </button>
     </header>
 
-    <p class="eyebrow" id="date"></p>
-    <h1 class="q" id="q">Is today a dry day?</h1>
-    <div class="answer" id="answer" aria-live="polite">···</div>
-    <p class="reason" id="reason"></p>
+    <main class="grid">
+      <section>
+        <p class="ask" id="date">Is today a dry day in</p>
+        <h1 class="state" id="state"><span class="skeleton sm"></span></h1>
+        <div class="answer-wrap"><span class="answer" id="answer"><span class="skeleton"></span></span></div>
+        <p class="reason" id="reason"></p>
+      </section>
 
-    <div class="countdown" id="countdown"></div>
+      <aside class="side">
+        <div class="next" id="next"></div>
 
-    <div class="section-h"><h3>Next 3 weeks</h3><span id="range"></span></div>
-    <div class="strip" id="strip"></div>
+        <section class="cal">
+          <div class="cal-head"><h2>Next three weeks</h2><span id="range"></span></div>
+          <div class="weekdays"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          <div class="days" id="days"></div>
+        </section>
 
-    <div class="section-h"><h3>Coming up</h3></div>
-    <ul class="list" id="ahead"></ul>
+        <section class="up">
+          <h2>Coming up</h2>
+          <div id="ahead"></div>
+        </section>
 
-    <a class="cta" href="install.html">
-      <span><b>Put it on your home screen</b><p>One tap opens straight to the state you're in.</p></span>
-      <span class="arrow">→</span>
-    </a>
+        <a class="install" href="install.html">
+          <span><strong>Add to home screen</strong><p>One tap opens the state you're in.</p></span>
+          <span class="go-ico"><i class="ph ph-arrow-right"></i></span>
+        </a>
 
-    <footer>
-      <div class="legend">
-        <span><span class="tag official">official</span>excise order</span>
-        <span><span class="tag statutory">statutory</span>fixed by state rules</span>
-        <span><span class="tag reported">reported</span>news report, re-check</span>
+        <p class="foot">Checked <span id="verified"></span>. We only list dates backed by a state order. District, election and protest closures can be announced at short notice.</p>
+      </aside>
+    </main>
+  </div>
+
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="panel-sheet">
+      <div class="sheet-top">
+        <h3 id="sheetTitle">Choose your state</h3>
+        <button class="icon-btn" id="close" aria-label="Close"><i class="ph ph-x"></i></button>
       </div>
-      Last checked <span id="verified"></span>. District, election and protest closures are added at short notice, so check your local excise office for those. · <a href="install.html">Install</a>
-    </footer>
-  </main>
-
-  <div class="sheet" id="sheet">
-    <div class="sheet-inner">
-      <h4>Where are you?</h4>
-      <button class="pill loc" id="useLoc"><span class="ping"></span>Use my current location</button>
-      <input id="search" placeholder="Search a state or UT" autocomplete="off">
-      <div id="opts"></div>
+      <button class="btn-solid" id="useLoc"><i class="ph ph-crosshair"></i>Use my location</button>
+      <p class="msg" id="msg"></p>
+      <div class="field">
+        <label for="search">Or search</label>
+        <input id="search" placeholder="Maharashtra, Delhi, Goa" autocomplete="off">
+      </div>
+      <div class="opts" id="opts"></div>
     </div>
   </div>
 

@@ -4,91 +4,92 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Install Dry?</title>
-  <meta name="theme-color" content="#07060a">
+  <meta name="theme-color" content="#0d0d0f">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..800&family=Geist+Mono:wght@400..600&display=swap">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <link rel="stylesheet" href="style.css">
-  <style>:root { --a: #ffc24b; --b: #ff6a3d; }</style>
 </head>
 <body>
-  <div class="aurora"><i></i><i></i></div>
-  <div class="grain"></div>
-
-  <main class="wrap">
-    <header>
-      <a class="logo" href="./">dry<em>?</em></a>
-      <a class="pill" href="./">← Back</a>
+  <div class="shell">
+    <header class="bar">
+      <a class="mark" href="./">dry<span>?</span></a>
+      <a class="btn-ghost" href="./"><i class="ph ph-arrow-left"></i><span>Back</span></a>
     </header>
 
-    <h1 class="h1">One tap.<br>Your state.<br><em>Every time.</em></h1>
-    <p class="sub">Add Dry? to your home screen. It opens like an app and finds your state from your location the moment you tap it.</p>
+    <section class="hero-i">
+      <h1>Know before you go.</h1>
+      <p>Add Dry? to your home screen. Every time you open it, it checks the state you're in.</p>
+    </section>
 
-    <div class="tabs" role="tablist">
+    <div class="seg" role="tablist">
       <span class="thumb"></span>
-      <button data-t="ios">iPhone</button>
-      <button data-t="android">Android</button>
-      <button data-t="siri">Siri</button>
+      <button role="tab" data-t="ios"><i class="ph ph-apple-logo"></i>iPhone</button>
+      <button role="tab" data-t="android"><i class="ph ph-android-logo"></i>Android</button>
+      <button role="tab" data-t="siri"><i class="ph ph-microphone"></i>Siri</button>
     </div>
 
-    <section class="panel" id="ios">
+    <section class="tab" id="ios">
       <ol class="steps">
-        <li style="--i:0"><span>Open this site in <b>Safari</b>. Chrome on iPhone works too on iOS 16.4 and later.</span></li>
-        <li style="--i:1"><span>Tap the <b>Share</b> button at the bottom of the screen.</span></li>
+        <li style="--i:0"><span>Open this page in <b>Safari</b>.</span></li>
+        <li style="--i:1"><span>Tap <b>Share</b> <i class="ph ph-export"></i> in the toolbar.</span></li>
         <li style="--i:2"><span>Scroll down and tap <b>Add to Home Screen</b>.</span></li>
-        <li style="--i:3"><span>Keep the name <b>Dry?</b> and tap <b>Add</b>.</span></li>
-        <li style="--i:4"><span>Open it from your home screen and tap <b>Allow</b> when it asks for your location.</span></li>
+        <li style="--i:3"><span>Tap <b>Add</b>, then open Dry? from your home screen.</span></li>
+        <li style="--i:4"><span>Tap <b>Allow</b> when it asks for your location.</span></li>
       </ol>
     </section>
 
-    <section class="panel" id="android">
-      <button class="btn" id="installBtn" hidden>Install Dry? now</button>
+    <section class="tab" id="android">
+      <div class="cta-row"><button class="btn-solid" id="installBtn" hidden><i class="ph ph-download-simple"></i>Install Dry?</button></div>
       <ol class="steps">
-        <li style="--i:0"><span>Open this site in <b>Chrome</b>.</span></li>
-        <li style="--i:1"><span>Tap the <b>⋮</b> menu at the top right.</span></li>
-        <li style="--i:2"><span>Tap <b>Add to Home screen</b> or <b>Install app</b>.</span></li>
-        <li style="--i:3"><span>Confirm with <b>Install</b>.</span></li>
-        <li style="--i:4"><span>Open it and <b>allow location</b>. It finds your state every time you launch it.</span></li>
+        <li style="--i:0"><span>Open this page in <b>Chrome</b>.</span></li>
+        <li style="--i:1"><span>Tap <b>menu</b> <i class="ph ph-dots-three-vertical"></i> at the top right.</span></li>
+        <li style="--i:2"><span>Tap <b>Add to Home screen</b>, then <b>Install</b>.</span></li>
+        <li style="--i:3"><span>Open Dry? and <b>allow location</b>.</span></li>
       </ol>
     </section>
 
-    <section class="panel" id="siri">
+    <section class="tab" id="siri">
       <ol class="steps">
         <li style="--i:0"><span>Open the <b>Shortcuts</b> app and tap <b>+</b>.</span></li>
-        <li style="--i:1"><span>Add the <b>Open URLs</b> action.</span></li>
-        <li style="--i:2"><span>Paste <code id="url"></code></span></li>
-        <li style="--i:3"><span>Name it <b>Is it a dry day</b>.</span></li>
-        <li style="--i:4"><span>Say <b>"Hey Siri, is it a dry day"</b>, or add the shortcut to your home screen from its share menu.</span></li>
+        <li style="--i:1"><span>Add the <b>Open URLs</b> action and paste <code id="url"></code></span></li>
+        <li style="--i:2"><span>Name the shortcut <b>Is it a dry day</b>.</span></li>
+        <li style="--i:3"><span>Now say <b>"Hey Siri, is it a dry day"</b>.</span></li>
       </ol>
-      <button class="btn" id="copy">Copy link</button>
+      <div class="cta-row"><button class="btn-solid" id="copy"><i class="ph ph-copy"></i>Copy link</button></div>
     </section>
 
-    <p class="note"><span>🔒</span><span>Your location is only used on your phone to work out your state. It's never stored. If you say no, you can pick your state by hand.</span></p>
-  </main>
+    <p class="privacy"><i class="ph ph-shield-check"></i><span>Your location stays on your phone. It's only used to work out your state, and you can always pick one by hand.</span></p>
+  </div>
 
   <script>
     const url = location.origin + location.pathname.replace(/install\.html$/, "") + "?locate";
     document.getElementById("url").textContent = url;
-    document.getElementById("copy").onclick = async (e) => {
-      try { await navigator.clipboard.writeText(url); e.target.textContent = "Copied ✓"; } catch { e.target.textContent = url; }
+    const copy = document.getElementById("copy");
+    copy.onclick = async () => {
+      try { await navigator.clipboard.writeText(url); copy.innerHTML = '<i class="ph ph-check"></i>Copied'; }
+      catch { copy.textContent = url; }
     };
 
+    const tabs = [...document.querySelectorAll("[data-t]")];
     const thumb = document.querySelector(".thumb");
-    const show = (t) => document.querySelectorAll("[data-t]").forEach((b) => {
+    const show = (t) => tabs.forEach((b, i) => {
       const on = b.dataset.t === t;
-      b.classList.toggle("on", on);
+      b.classList.toggle("on", on); b.setAttribute("aria-selected", on);
       document.getElementById(b.dataset.t).classList.toggle("on", on);
-      if (on) thumb.style.transform = `translateX(${[...b.parentNode.querySelectorAll("button")].indexOf(b) * 100}%)`;
+      if (on) thumb.style.transform = `translateX(${i * 100}%)`;
     });
-    document.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => show(b.dataset.t)));
-    const first = /android/i.test(navigator.userAgent) ? "android" : "ios";
-    show(first);
+    tabs.forEach((b) => (b.onclick = () => show(b.dataset.t)));
+    show(/android/i.test(navigator.userAgent) ? "android" : "ios");
 
-    let deferred;
     addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault(); deferred = e;
+      e.preventDefault();
       const btn = document.getElementById("installBtn");
       btn.hidden = false;
-      btn.onclick = async () => { deferred.prompt(); await deferred.userChoice; btn.hidden = true; };
+      btn.onclick = async () => { e.prompt(); await e.userChoice; btn.hidden = true; };
     });
   </script>
 </body>
